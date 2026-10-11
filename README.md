@@ -1,3 +1,5 @@
+> ⚠️ **已弃用（Deprecated）**：本包已并入 [monkey-repl](https://github.com/yuanliwei/Monkey-Repl)，请改用 `npm i monkey-repl`。
+
 ## android-controller-wrapper
 
 controller https://github.com/yuanliwei/Monkey-Repl/releases
