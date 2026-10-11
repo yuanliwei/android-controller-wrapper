@@ -2,10 +2,10 @@
   "name": "android-controller-wrapper",
   "version": "1.0.5",
   "description": "android device controller wrapper",
-  "main": "index.js",
+  "main": "src/lib.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "keywords": [
     "android",
@@ -20,11 +20,5 @@
   },
   "homepage": "https://github.com/yuanliwei/android-controller-wrapper#readme",
   "author": "yuanliwei",
-  "license": "ISC",
-  "devDependencies": {
-    "eslint-plugin-import": "^2.26.0"
-  },
-  "dependencies": {
-    "node-fetch": "^3.2.6"
-  }
+  "license": "ISC"
 }

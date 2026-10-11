@@ -1,47 +1,10 @@
 import { spawn, execSync } from 'child_process'
-import fetch from 'node-fetch'
 
 /**
- * @typedef {Object} ViewTree
- * @property {number} deep deep 0
- * @property {number} index index 0
- * @property {string} resource_id -2147483650
- * @property {string} resource_id_name com.android.calculator2:id/mode
- * @property {string} text text
- * @property {string} bounds "[0,0][1080,2316]"
- * @property {string} class  "android.widget.FrameLayout"
- * @property {number} inputType  -1
- * @property {boolean} isEditable  false
- * @property {boolean} isClickable false
- * @property {boolean} isCheckable false
- * @property {boolean} isChecked false
- * @property {boolean} isVisibleToUser true
- * @property {boolean} isAccessibilityFocused false
- * @property {number} windowId windowId 39904
- * @property {number} viewId viewId 2147483646
- * @property {ViewTree[]} childrens childrens
+ * @import {ViewTree, Options, MatchCallback, ExecResult} from './types.js'
  */
 
-/**
- * @callback matchCallback
- * @param {ViewTree} ViewTree
- * @returns {boolean}
- */
-
-
-/**
- * @typedef {Object} Options
- * @property {'repl'|'network'} [type]           default : repl
- * @property {'text'|'json'} [command_type]      default : text
- * @property {string} [name]                     default : monkey-repl
- * @property {number} [port]                     default : 5678
- * @property {string} [ip_address]               default : ''
- * @property {string} [allow_ip_address]         default : 192.168.*
- * @property {boolean} [query_view]              default : true
- * @property {boolean} [activity_controller]     default : true
- */
-
-class Controller {
+export class Controller {
 
     /**
      * @param {Options} options 
@@ -62,6 +25,7 @@ class Controller {
         }, options)
 
 
+        /** @type {(command: { id: number, data: string }) => Promise<any>} */
         this.execImpl = async (command) => { console.log(command) }
     }
 
@@ -124,7 +88,7 @@ class Controller {
 
         if (type == 'network') {
             // curl http://ip_address:5678 -d help
-            this.execImpl = async (command) => await (await (fetch(`http://${this.options.ip_address}:${this.options.port}`, { method: 'POST', body: JSON.stringify(command) }))).json()
+            this.execImpl = async (command) => /** @type {any} */ (await (await fetch(`http://${this.options.ip_address}:${this.options.port}`, { method: 'POST', body: JSON.stringify(command) })).json())
         }
 
         let result = await this.exec(`echo test`)
@@ -134,7 +98,7 @@ class Controller {
 
     /**
      * @param {String} command 
-     * @returns {Promise<{id: Number,isSuccess:boolean,data:String}>}
+     * @returns {Promise<ExecResult>}
      */
     async exec(command) {
         let id = this.sequenceId++
@@ -241,7 +205,10 @@ class Controller {
      * @returns {[number, number, number,number]} rect [left, top, right, bottom]
      */
     getRect(bounds) {
-        return bounds.match(/\[(-?\d+),(-?\d+)\]\[(-?\d+),(-?\d+)\]/).slice(1).map(o => parseInt(o))
+        let match = bounds.match(/\[(-?\d+),(-?\d+)\]\[(-?\d+),(-?\d+)\]/)
+        if (!match) throw new Error(`invalid bounds: ${bounds}`)
+        let [, left, top, right, bottom] = match
+        return /** @type {[number, number, number, number]} */ ([parseInt(left), parseInt(top), parseInt(right), parseInt(bottom)])
     }
 
     /**
@@ -317,14 +284,14 @@ class Controller {
         }
         if (!ret.isSuccess) {
             console.error(ret)
-            return {}
+            return /** @type {ViewTree} */ ({})
         }
         try {
             let tree = JSON.parse(ret.data)
             return this.filterVisible(tree)
         } catch (e) {
             console.log(ret)
-            throw new Error(ret)
+            throw new Error(typeof ret.data === 'string' ? ret.data : JSON.stringify(ret))
         }
     }
 
@@ -347,7 +314,7 @@ class Controller {
     /**
      * wait until screen includes the view
      *
-     * @param {matchCallback} match
+     * @param {MatchCallback} match
      * @returns {Promise<ViewTree>}
      */
     async waitViewForMatch(match) {
@@ -366,12 +333,12 @@ class Controller {
      * find view in viewtree with match
      *
      * @param {ViewTree} tree
-     * @param {matchCallback} match
+     * @param {MatchCallback} match
      * 
-     * @returns {ViewTree}
+     * @returns {ViewTree[]}
      */
     findViewsInTree(tree, match) {
-        let objs = []
+        let objs = /** @type {ViewTree[]} */ ([])
         let loop = (child) => {
             if (match(child)) {
                 objs.push(child)
@@ -387,7 +354,7 @@ class Controller {
      * find view in viewtree with match
      *
      * @param {ViewTree} tree
-     * @param {matchCallback} match
+     * @param {MatchCallback} match
      * 
      * @returns {ViewTree}
      */
@@ -396,20 +363,19 @@ class Controller {
     }
 
     /**
-     * click view that match matchCallback
+     * click view that match MatchCallback
      *
-     * @param {ViewTree} tree
-     * @param {matchCallback} match
+     * @param {ViewTree} view
      */
     async clickView(view) {
         return this.clickRect(this.getRect(view.bounds))
     }
 
     /**
-     * click view that match matchCallback
+     * click view that match MatchCallback
      *
      * @param {ViewTree} tree
-     * @param {matchCallback} match
+     * @param {MatchCallback} match
      */
     async clickMatchView(tree, match) {
         let view = this.findViewInTree(tree, match)

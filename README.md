@@ -18,7 +18,7 @@ adb push monkey_repl.jar /data/local/tmp/monkey_repl.jar
 **code**
 
 ```js
-import Controller from "android-controller-wrapper"
+import { Controller } from "android-controller-wrapper"
 
 async function start() {
     let controller = new Controller({})

@@ -1,6 +1,7 @@
-import Controller from './index.js'
+import { test } from 'node:test'
+import { Controller } from './lib.js'
 
-async function start() {
+test('android controller flow', async () => {
     let controller = new Controller({
         // activity_controller: false,
         // query_view: false,
@@ -64,6 +65,5 @@ async function start() {
     await controller.quit()
     console.log('over!')
 
-}
+})
 
-start()
